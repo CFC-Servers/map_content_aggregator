@@ -43,8 +43,8 @@ hook.Add( "Think", "MCA_Init", function()
 
     timer.Simple( 5, function()
         print( "MCA: Initializing..." )
-        MCA.Materials:LoadMaterials( holder )
         MCA.Models:LoadModels( holder )
+        MCA.Materials:LoadMaterials( holder )
 
         print( "MCA: Initialization complete!", "Found", table.Count( holder ), "content paths." )
         local allContentPaths = {}

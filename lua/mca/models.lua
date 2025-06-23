@@ -4,6 +4,8 @@ MCA.Models = MCA.Models or {}
 local Models = MCA.Models
 
 Models.testEnt = Models.testEnt or nil
+Models.allModels = {}
+local allModels = Models.allModels
 
 do
     local function createTestEnt()
@@ -59,7 +61,7 @@ do
             local filePath = dir .. fileName
 
             if string_StartsWith( filePath, noExtension .. "." ) then
-                print( "MCA: Model File: ", modelPath, "->", filePath )
+                print( "  MCA: Model File: ", filePath )
                 holder[filePath] = true
             end
         end
@@ -87,8 +89,6 @@ do
     --- @param holder table<string, boolean>
     --- @return nil
     function Models:LoadModels( holder )
-        local modelPaths = {}
-
         do
             local staticModels = NikNaks.CurrentMap:GetStaticPropModels()
             local staticModelCount = #staticModels
@@ -100,7 +100,7 @@ do
                 if isValidModel( modelName ) then
                     print( "MCA: Static Model: ", modelName )
                     holder[modelName] = true
-                    modelPaths[modelName] = true
+                    allModels[modelName] = true
                 end
             end
         end
@@ -120,29 +120,20 @@ do
                 local model = rawget( ent, "model" )
                 local classname = rawget( ent, "classname" )
 
-                if not classBlacklist[classname] and isValidModel( model ) and (not holder[model]) then
+                if (not classBlacklist[classname]) and isValidModel( model ) and (not holder[model]) then
                     print( "MCA: Entity Model: ", classname, model )
                     holder[model] = true
-                    modelPaths[model] = true
+                    allModels[model] = true
                 end
             end
         end
 
         local cache = {}
-        for modelPath in pairs( modelPaths ) do
-            if cache[modelPath] then continue end
-
-            for _, mat in ipairs( Models.GetModelMaterials( modelPath ) ) do
-                if (not holder[mat]) and (not IsBaseAsset( mat )) then
-                    mat = "materials/" .. mat .. ".vmt"
-                    print( "MCA: Model Material: ", modelPath, "->", mat )
-                    holder[mat] = true
-
-                    Models.GetModelFiles( modelPath, holder )
-                end
+        for modelPath in pairs( allModels ) do
+            if not cache[modelPath] then
+                Models.GetModelFiles( modelPath, holder )
+                cache[modelPath] = true
             end
-
-            cache[modelPath] = true
         end
     end
 end

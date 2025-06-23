@@ -5,6 +5,7 @@ local string_lower = string.lower
 MCA.Materials = {}
 --- @class MCA_Materials
 local Materials = MCA.Materials
+local Models = MCA.Models
 local IsBaseAsset = MCA.Utils.IsBaseAsset
 
 local failedToLoad = {}
@@ -139,6 +140,19 @@ do
         for i = 1, #materialPaths do
             local path = materialPaths[i]
             holder[path] = true
+        end
+
+        -- Load materials for all models
+        for modelPath in pairs( Models.allModels ) do
+            for _, mat in ipairs( Models.GetModelMaterials( modelPath ) ) do
+                print( "MCA: Getting Model Materials: ", mat )
+
+                if (not holder[mat]) and (not IsBaseAsset( mat )) then
+                    mat = "materials/" .. mat .. ".vmt"
+                    print( "  MCA: Model Material: ", mat )
+                    holder[mat] = true
+                end
+            end
         end
     end
 end
