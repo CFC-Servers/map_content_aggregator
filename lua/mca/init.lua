@@ -5,8 +5,9 @@ MCA = {}
 
 include( "utils.lua" )
 include( "decals.lua" )
-include( "materials.lua" )
 include( "models.lua" )
+include( "materials.lua" )
+
 
 local timestamp = os.time()
 local mapname = game.GetMap()
