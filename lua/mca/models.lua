@@ -53,7 +53,7 @@ do
 
         local dir = string_GetPathFromFilename( modelPath )
 
-        local files = file_Find( noExtension, "GAME" )
+        local files = file_Find( noExtension .. ".*", "GAME" )
         local fileCount = #files
 
         for i = 1, fileCount do
@@ -65,6 +65,47 @@ do
                 holder[filePath] = true
             end
         end
+
+        local modelInfo = util.GetModelInfo( modelPath )
+        if not modelInfo then return end
+        local materialDirectories = modelInfo.MaterialDirectories or {}
+        local materials = modelInfo.Materials or {}
+        for _, mat in pairs( materials ) do
+            for _, dir in pairs( materialDirectories ) do
+                local dir = "materials/" .. dir
+                dir = string.Replace( dir, "\\", "/" )
+                dir = string.lower( dir )
+
+                local searchPath = dir .. mat .. ".*"
+                searchPath = string.Replace( searchPath, "\\", "/" )
+                searchPath = string.lower( searchPath )
+
+                print( "  MCA: Searching for model material files: ", searchPath )
+                local files, _ = file_Find( searchPath, "GAME" )
+
+                local baseDir = dir .. string_GetPathFromFilename( mat )
+                for _, fileName in pairs( files ) do
+                    local filePath = baseDir .. fileName
+                    filepath = string.Replace( filePath, "\\", "/" )
+                    filePath = string.lower( filePath )
+                    if not holder[filePath] then
+                        print( "    MCA: Model Material File: ", filePath )
+                        holder[filePath] = true
+                    end
+
+                    if string.GetExtensionFromFilename( filePath ) == "vmt" then
+                        local matNames = {}
+                        MCA.Materials.processVmt( matNames, filePath )
+                        for _, matName in pairs( matNames ) do
+                            if not holder[matName] then
+                                print( "      MCA: VMT Include File: ", matName )
+                                holder[matName] = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end
 end
 
@@ -72,10 +113,10 @@ do
     local IsBaseAsset = MCA.Utils.IsBaseAsset
     local util_IsValidModel = util.IsValidModel
 
-    local function isValidModel( modelName )
+    local function isValidModel( modelName, staticProp )
         if not modelName then return end
 
-        local validModel = util_IsValidModel( modelName )
+        local validModel = util_IsValidModel( modelName ) or staticProp
         validModel = validModel and #modelName > 0
         validModel = validModel and modelName[1] ~= "*"
         validModel = validModel and modelName ~= "models/error.mdl"
@@ -97,10 +138,12 @@ do
             for i = 1, staticModelCount do
                 local modelName = rawget( staticModels, i )
 
-                if isValidModel( modelName ) then
+                if isValidModel( modelName, true ) then
                     print( "MCA: Static Model: ", modelName )
                     holder[modelName] = true
                     allModels[modelName] = true
+                else
+                    print( "MCA: Invalid Static Model: ", modelName )
                 end
             end
         end
