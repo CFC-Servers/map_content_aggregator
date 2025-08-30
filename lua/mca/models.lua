@@ -36,13 +36,48 @@ do
         return testEnt:GetMaterials()
     end
 end
-
 do
     local file_Find = file.Find
     local string_sub = string.sub
     local string_find = string.find
     local string_StartsWith = string.StartsWith
     local string_GetPathFromFilename = string.GetPathFromFilename
+
+
+    local function processModelMaterial( mat, dir, holder )
+        dir = "materials/" .. dir
+        dir = string.Replace( dir, "\\", "/" )
+        dir = string.lower( dir )
+
+        local searchPath = dir .. mat .. ".*"
+        searchPath = string.Replace( searchPath, "\\", "/" )
+        searchPath = string.lower( searchPath )
+
+        print( "  MCA: Searching for model material files: ", searchPath )
+        local files, _ = file_Find( searchPath, "GAME" )
+
+        local baseDir = dir .. string_GetPathFromFilename( mat )
+        for _, fileName in pairs( files ) do
+            local filePath = baseDir .. fileName
+            filePath = string.Replace( filePath, "\\", "/" )
+            filePath = string.lower( filePath )
+            if not holder[filePath] then
+                print( "    MCA: Model Material File: ", filePath )
+                holder[filePath] = true
+            end
+
+            if string.GetExtensionFromFilename( filePath ) == "vmt" then
+                local matNames = {}
+                MCA.Materials.processVmt( matNames, filePath )
+                for _, matName in pairs( matNames ) do
+                    if not holder[matName] then
+                        print( "      MCA: VMT Include File: ", matName )
+                        holder[matName] = true
+                    end
+                end
+            end
+        end
+    end
 
     --- Gets all model-related file paths for the given model path and puts them in the given lookup table
     --- @param modelPath string
@@ -71,39 +106,8 @@ do
         local materialDirectories = modelInfo.MaterialDirectories or {}
         local materials = modelInfo.Materials or {}
         for _, mat in pairs( materials ) do
-            for _, dir in pairs( materialDirectories ) do
-                local dir = "materials/" .. dir
-                dir = string.Replace( dir, "\\", "/" )
-                dir = string.lower( dir )
-
-                local searchPath = dir .. mat .. ".*"
-                searchPath = string.Replace( searchPath, "\\", "/" )
-                searchPath = string.lower( searchPath )
-
-                print( "  MCA: Searching for model material files: ", searchPath )
-                local files, _ = file_Find( searchPath, "GAME" )
-
-                local baseDir = dir .. string_GetPathFromFilename( mat )
-                for _, fileName in pairs( files ) do
-                    local filePath = baseDir .. fileName
-                    filepath = string.Replace( filePath, "\\", "/" )
-                    filePath = string.lower( filePath )
-                    if not holder[filePath] then
-                        print( "    MCA: Model Material File: ", filePath )
-                        holder[filePath] = true
-                    end
-
-                    if string.GetExtensionFromFilename( filePath ) == "vmt" then
-                        local matNames = {}
-                        MCA.Materials.processVmt( matNames, filePath )
-                        for _, matName in pairs( matNames ) do
-                            if not holder[matName] then
-                                print( "      MCA: VMT Include File: ", matName )
-                                holder[matName] = true
-                            end
-                        end
-                    end
-                end
+            for _, modelMatDir in pairs( materialDirectories ) do
+                processModelMaterial( mat, modelMatDir, holder )
             end
         end
     end
