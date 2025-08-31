@@ -24,7 +24,10 @@ local function processVmtTextures( materialPaths, vmtFields, _i )
         if not value then return end
         if value == "env_cubemap" then return end
 
-        local vtf = string_lower( "materials/" .. value .. ".vtf" )
+        local vtf = string_lower( "materials/" .. value )
+        if not string.EndsWith( vtf, ".vtf" ) then
+            vtf = vtf .. ".vtf"
+        end
         if IsBaseAsset( vtf ) then
             log( "(Skipping base VTF asset: " .. vtf .. ")" )
             return
@@ -117,6 +120,7 @@ do
 
         local Decals = MCA.Decals --[[@as MCA_DecalsModule]]
         table.Add( worldMats, Decals:GetMapDecalTextures() )
+        table.Add( worldMats, game.GetWorld():GetMaterials() )
 
         local count = #worldMats
 
